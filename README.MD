@@ -1,8 +1,8 @@
 # GitHub Repository Name Checker
 
-Simple github organisation repostiroy checker that fetches all the repositories within an organization to ensure they adhere to the standard naming convention of kebab-case (lowercase-words-separated-by-dashes). 
+Simple github organisation repository checker that fetches all the repositories within an organization to ensure they adhere to the standard naming convention of kebab-case (lowercase-words-separated-by-dashes). 
 
-It's designed to help maintain consistency and clarity in repository naming across organization.
+It's designed to help maintain consistency and clarity in repository naming across organizations.
 
 ## Prerequisites
 
