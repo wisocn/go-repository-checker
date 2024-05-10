@@ -26,7 +26,7 @@ func main() {
 
     // github token
     token: = os.Args[1]
-        // github org name  
+    // github org name  
     org: = os.Args[2]
 
     ctx: = context.Background()
