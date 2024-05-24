@@ -17,5 +17,8 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
+# don't commit report file
+report.html
+
 # Go workspace file
 go.work

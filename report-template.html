@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repository Validation Report</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Repository Validation Report</h1>
+    <table>
+        <tr>
+            <th>Repository Name</th>
+            <th>Valid Kebab Case Naming</th>
+            <th>Has README</th>
+            <th>Has CODEOWNERS</th>
+            <th>Has .editorconfig</th>
+        </tr>
+        {{range .}}
+        <tr>
+            <td>{{.RepoName}}</td>
+            <td>{{.HasValidKebabCaseNaming}}</td>
+            <td>{{.HasReadme}}</td>
+            <td>{{.HasCodeOwners}}</td>
+            <td>{{.HasEditorConfig}}</td>
+        </tr>
+        {{end}}
+    </table>
+</body>
+</html>

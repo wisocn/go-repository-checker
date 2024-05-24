@@ -5,15 +5,102 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
+	"text/template"
 
 	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
 )
 
+type RepositoryValidation struct {
+	RepoName                string
+	HasValidKebabCaseNaming bool
+	HasReadme               bool
+	HasCodeOwners           bool
+	HasEditorConfig         bool
+}
+
 // isValidKebabCase checks if the repository name adheres to kebab-case.
-func isValidKebabCase(name string) bool {
+func hasValidKebabCaseNaming(name string) bool {
 	match, _ := regexp.MatchString(`^[a-z0-9]+(-[a-z0-9]+)*$`, name)
 	return match
+}
+
+func hasEditorConfig(files []*github.RepositoryContent) bool {
+	for _, content := range files {
+		if content.GetType() == "file" && strings.EqualFold(content.GetName(), ".ediorconfig") {
+			return true
+		}
+	}
+	return false
+}
+
+func hasReadme(files []*github.RepositoryContent) bool {
+	for _, content := range files {
+		if content.GetType() == "file" && strings.EqualFold(content.GetName(), "README.md") {
+			return true
+		}
+	}
+	return false
+}
+
+func hasCodeOwners(files []*github.RepositoryContent) bool {
+	for _, content := range files {
+		if content.GetType() == "file" && strings.EqualFold(content.GetName(), "CODEOWNERS") {
+			return true
+		}
+	}
+
+	return false
+}
+
+func getRepositoriesContents(ctx context.Context, client *github.Client, organisation, repo, path string) ([]*github.RepositoryContent, error) {
+	_, directoryContents, _, err := client.Repositories.GetContents(ctx, organisation, repo, path, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if directoryContents == nil {
+		return nil, fmt.Errorf("no contents found at path: %s", path)
+	}
+
+	return directoryContents, nil
+}
+
+func generateReport(validations []RepositoryValidation) {
+	fmt.Println("Generating report")
+
+	// Read the HTML template from an external file
+	templateFile := "report-template.html"
+	tmplContent, err := os.ReadFile(templateFile)
+	if err != nil {
+		fmt.Println("Error reading template file:", err)
+		return
+	}
+
+	// Create an HTML file
+	file, err := os.Create("report.html")
+	if err != nil {
+		fmt.Println("Error creating file:", err)
+		return
+	}
+	defer file.Close()
+
+	// Parse and execute the template
+	tmpl, err := template.New("report").Parse(string(tmplContent))
+	if err != nil {
+		fmt.Println("Error parsing template:", err)
+		return
+	}
+
+	err = tmpl.Execute(file, validations)
+	if err != nil {
+		fmt.Println("Error executing template:", err)
+		return
+	}
+
+	fmt.Println("Report generated successfully.")
+
 }
 
 func main() {
@@ -25,24 +112,23 @@ func main() {
 		return
 	}
 
-	// github token
+	// github token input
+	// github org name input
 	token := os.Args[1]
-	// github org name
 	org := os.Args[2]
 
+	// clients definition
 	ctx := context.Background()
-
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 	tc := oauth2.NewClient(ctx, ts)
-
 	client := github.NewClient(tc)
+
+	// validation types
+	var repoValidations []RepositoryValidation
 
 	opt := &github.RepositoryListByOrgOptions{ListOptions: github.ListOptions{PerPage: 10}}
 
-	// all repo counters
-	allRepoCounter := 0
-	kebabCaseRepositoryCounter := 0
-	nonStandardRepositoryCounter := 0
+	fmt.Printf("Standard validation routine started")
 
 	// Loop through all pages of results
 	for {
@@ -52,19 +138,21 @@ func main() {
 			return
 		}
 
-		allRepoCounter = allRepoCounter + len(repos)
-
 		for _, repo := range repos {
-			repoName := repo.GetName()
-			validCase := isValidKebabCase(repoName)
-
-			if validCase {
-				kebabCaseRepositoryCounter++
-			} else {
-				nonStandardRepositoryCounter++
+			repositoryContents, error := getRepositoriesContents(ctx, client, org, repo.GetName(), "")
+			if error != nil {
+				fmt.Printf("Error fetching content of the repository: %v\n with error: %v\n", repo.GetName(), error)
+				continue
 			}
-
-			fmt.Printf("Repository: %s has valid repository name: %t\n", repoName, validCase)
+			repoName := repo.GetName()
+			repoValid := RepositoryValidation{
+				RepoName:                repoName,
+				HasReadme:               hasReadme(repositoryContents),
+				HasCodeOwners:           hasCodeOwners(repositoryContents),
+				HasEditorConfig:         hasEditorConfig(repositoryContents),
+				HasValidKebabCaseNaming: hasValidKebabCaseNaming(repoName),
+			}
+			repoValidations = append(repoValidations, repoValid)
 		}
 
 		// Check if there are more pages to fetch
@@ -74,10 +162,6 @@ func main() {
 		opt.Page = resp.NextPage
 	}
 
-	// break-line for formatting
-	fmt.Println()
-	fmt.Printf("all respos counter :%d\n", allRepoCounter)
-	fmt.Printf("kebab-case repos counter: :%d\n", kebabCaseRepositoryCounter)
-	fmt.Printf("non-standard repos counter: :%d\n", nonStandardRepositoryCounter)
+	generateReport(repoValidations)
 
 }
