@@ -8,6 +8,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"go-repository-checker/internal/types"
 	"text/tabwriter"
 
 	"github.com/google/go-github/github"
@@ -80,6 +81,8 @@ func hasMavenBuild(files []*github.RepositoryContent) bool {
 	return false
 }
 
+
+
 func handleScan(org *string, repo *string, token *string) {
 
 	if *org == "" || *token == "" {
@@ -122,7 +125,7 @@ func scanRepository(ctx context.Context, ts oauth2.TokenSource, tc *http.Client,
 		return
 	}
 
-	repoValid := RepositoryValidation{
+	repoValid := types.RepositoryValidation{
 		RepoName:                *repo,
 		HasReadme:               hasReadme(repositoryContents),
 		HasCodeOwners:           hasCodeOwners(repositoryContents),
@@ -161,7 +164,7 @@ func scanOrganisation(ctx context.Context, ts oauth2.TokenSource, tc *http.Clien
 	itemsCounter := 0
 
 	// validation types
-	var repoValidations []RepositoryValidation
+	var repoValidations []types.RepositoryValidation
 
 	opt := &github.RepositoryListByOrgOptions{ListOptions: github.ListOptions{PerPage: 10}}
 
@@ -183,7 +186,7 @@ func scanOrganisation(ctx context.Context, ts oauth2.TokenSource, tc *http.Clien
 				continue
 			}
 			repoName := repo.GetName()
-			repoValid := RepositoryValidation{
+			repoValid := types.RepositoryValidation{
 				RepoName:                repoName,
 				HasReadme:               hasReadme(repositoryContents),
 				HasCodeOwners:           hasCodeOwners(repositoryContents),
