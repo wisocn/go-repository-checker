@@ -9,10 +9,16 @@ import (
 	"regexp"
 	"strings"
 	"go-repository-checker/internal/types"
-	"text/tabwriter"
 
 	"github.com/google/go-github/github"
 	"golang.org/x/oauth2"
+)
+
+// Color codes
+const (
+	Reset = "\033[0m"
+	Green = "\033[32m"
+	Red   = "\033[31m"
 )
 
 // isValidKebabCase checks if the repository name adheres to kebab-case.
@@ -135,28 +141,23 @@ func scanRepository(ctx context.Context, ts oauth2.TokenSource, tc *http.Client,
 		HasBuildGradle:          hasGradleBuild(repositoryContents),
 	}
 
-	// Create a new tabwriter
-	writer := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', tabwriter.Debug)
-
-	// Print header
-	fmt.Fprintln(writer, "RepoName\tHasValidKebabCaseNaming\tHasReadme\tHasCodeOwners\tHasEditorConfig\tHasBuildGradle\tHasMavenBuild\t")
-
-	// Print separator
-	fmt.Fprintln(writer, "--------\t----------------------\t---------\t--------------\t---------------\t---------------\t-------------\t")
-
+	
 	// Print rows
-	fmt.Fprintf(writer, "%s\t%t\t%t\t%t\t%t\t%t\t%t\t\n",
-		repoValid.RepoName,
-		repoValid.HasValidKebabCaseNaming,
-		repoValid.HasReadme,
-		repoValid.HasCodeOwners,
-		repoValid.HasEditorConfig,
-		repoValid.HasBuildGradle,
-		repoValid.HasMavenBuild)
+	fmt.Printf("Repository name 		%s\n", repoValid.RepoName)
+	fmt.Printf("Has kebab-case naming 	\t%s\n", formatResult(repoValid.HasValidKebabCaseNaming))
+	fmt.Printf("Has README.MD 			%s\n", formatResult(repoValid.HasReadme))
+	fmt.Printf("Has CODEOWNERS 			%s\n", formatResult(repoValid.HasCodeOwners))
+	fmt.Printf("Has .editorconfig 		%s\n", formatResult(repoValid.HasEditorConfig))
+	fmt.Printf("Has build.gradle 		%s\n", formatResult(repoValid.HasBuildGradle))
+	fmt.Printf("Has pom.xml 			%s\n", formatResult(repoValid.HasMavenBuild))
+}
 
-	// Flush the writer
-	writer.Flush()
-
+// formatResult formats the boolean result with colors
+func formatResult(result bool) string {
+	if result {
+		return fmt.Sprintf("%s[PASSED]%s", Green, Reset)
+	}
+	return fmt.Sprintf("%s[FAIL]%s", Red, Reset)
 }
 
 func scanOrganisation(ctx context.Context, ts oauth2.TokenSource, tc *http.Client, client *github.Client, org *string) {
