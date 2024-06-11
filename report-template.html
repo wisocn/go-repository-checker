@@ -27,6 +27,8 @@
             <th>Has README</th>
             <th>Has CODEOWNERS</th>
             <th>Has .editorconfig</th>
+            <th>Has pom.xml</th>
+            <th>Has build.gradle</th>
         </tr>
         {{range .}}
         <tr>
@@ -35,6 +37,8 @@
             <td>{{.HasReadme}}</td>
             <td>{{.HasCodeOwners}}</td>
             <td>{{.HasEditorConfig}}</td>
+            <td>{{.HasMavenBuild}}</td>
+            <td>{{.HasBuildGradle}}</td>
         </tr>
         {{end}}
     </table>

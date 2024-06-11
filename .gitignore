@@ -22,3 +22,12 @@ report.html
 
 # Go workspace file
 go.work
+
+# OSX crap
+.DS_Store*
+
+# nix profiles
+.direnv/
+
+# build output
+.bin/
